@@ -1,0 +1,80 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: database-backup
+  namespace: storage
+spec:
+  schedule: "1 9,21 * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: cron-database-backup
+              image: raniellyf/kubernetes-database-backup:latest
+              imagePullPolicy: Always
+              resources:
+                limits:
+                  cpu: 600m
+                  memory: 1Gi
+              env:
+                - name: TZ
+                  value: America/Sao_Paulo
+                - name: MONGODB_BACKUP
+                  value: "1"
+                - name: MYSQL_BACKUP
+                  value: "1"
+                - name: S3_BUCKET_BACKUP
+                  value: 
+                - name: S3_MONGODB_BUCKET_PATH
+                  value: database/mongodb
+                - name: S3_MYSQL_BUCKET_PATH
+                  value: database/mysql
+                - name: AWS_DEFAULT_REGION
+                  valueFrom:
+                    secretKeyRef:
+                      name: 
+                      key: 
+                - name: AWS_ACCESS_KEY_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: 
+                      key: 
+                - name: AWS_SECRET_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: 
+                      key: 
+                - name: MONGODB_USERNAME
+                  valueFrom:
+                    secretKeyRef:
+                      name: 
+                      key: 
+                - name: MONGODB_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: 
+                      key: 
+                - name: MONGODB_HOST
+                  valueFrom:
+                    secretKeyRef:
+                      name:
+                      key:
+                - name: MONGODB_PORT
+                  value: "27017"
+                - name: MONGODB_AUTH_DB
+                  value: admin
+                - name: MYSQL_HOST
+                  valueFrom:
+                    secretKeyRef:
+                      name: 
+                      key: 
+                - name: MYSQL_ROOT_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: 
+                      key: 
+                - name: MYSQL_ROOT_USERNAME
+                  value: root

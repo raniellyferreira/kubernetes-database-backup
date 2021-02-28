@@ -1,0 +1,9 @@
+#!/bin/bash
+
+if [[ $MONGODB_BACKUP == 1 ]]; then
+    mongodb-backup
+fi
+
+if [[ $MYSQL_BACKUP == 1 ]]; then
+    mysql-backup
+fi
