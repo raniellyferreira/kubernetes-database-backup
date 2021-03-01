@@ -37,7 +37,7 @@ if [[ $? != 0 ]]; then
     exit 1
 fi
 
-tar -czf /tmp/${TAR_FILE} -C ${BACKUP_PATH} ${BACKUP_PATH}
+tar -cjf /tmp/${TAR_FILE} -C ${BACKUP_PATH} ${BACKUP_PATH}
 
 du -hs $BACKUP_PATH
 du -hs /tmp/$TAR_FILE
