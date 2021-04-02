@@ -39,6 +39,8 @@ fi
 
 tar -cjf /tmp/${TAR_FILE} -C ${BACKUP_PATH} ${BACKUP_PATH}
 
+readonly TAR_SIZE=$(du -hs /tmp/$TAR_FILE | awk '{print $1}')
+
 du -hs $BACKUP_PATH
 du -hs /tmp/$TAR_FILE
 
@@ -54,12 +56,20 @@ UPLOAD_STATUS=$?
 do_log "Remove tar file"
 rm -f /tmp/$TAR_FILE
 
+readonly FINISH_DATE=$(date +%F-%H%M)
+
 if [[ $UPLOAD_STATUS != 0 ]]; then
     do_log "ERROR Upload tar /tmp/$TAR_FILE on s3 fail"
-    notify_dev "Warning MongoDB Backup $TIMESTAMP" "MongoDB Backup: ERROR Upload tar /tmp/$TAR_FILE to S3"
-else
-    do_log "Success upload tar /tmp/$TAR_FILE to S3"
-    notify_dev "MongoDB Backup $TIMESTAMP" "MongoDB Backup finished successfully $TAR_FILE"
+    notify_dev "Warning MongoDB Backup $FINISH_DATE" "MongoDB Backup: ERROR Upload tar /tmp/$TAR_FILE to S3"
+    exit 1  
 fi
 
-exit $?
+if [[ $MONGODB_ROTATE_ARGS ]]; then
+    do_log "Rotating backups..."
+    rotate-backups-s3 $MONGODB_ROTATE_ARGS --include="$S3_MONGODB_BUCKET_PATH/*" --verbose $S3_BUCKET_BACKUP
+fi
+
+do_log "MongoDB Backup finished successfully with $TAR_SIZE"
+notify_dev "MongoDB Backup $FINISH_DATE" "MongoDB Backup finished successfully with $TAR_SIZE s3://$S3_BUCKET_BACKUP/$S3_MONGODB_BUCKET_PATH/$TAR_FILE"
+
+exit 0

@@ -18,7 +18,7 @@ RUN set -x \
     python3 \
     py3-pip \
     && pip3 install --upgrade pip \
-    && pip3 install awscli
+    && pip3 install awscli rotate-backups-s3
 
 ARG CACHEBUST=1
 

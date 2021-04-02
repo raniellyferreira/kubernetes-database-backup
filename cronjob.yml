@@ -32,6 +32,10 @@ spec:
                   value: database/mongodb
                 - name: S3_MYSQL_BUCKET_PATH
                   value: database/mysql
+                - name: MYSQL_ROTATE_ARGS
+                  value: "--hourly=24 --daily=7 --weekly=10 --monthly=12 --yearly=always"
+                - name: MONGODB_ROTATE_ARGS
+                  value: "--hourly=24 --daily=7 --weekly=10 --monthly=12 --yearly=always"
                 - name: AWS_DEFAULT_REGION
                   valueFrom:
                     secretKeyRef:

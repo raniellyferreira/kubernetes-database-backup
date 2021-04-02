@@ -39,6 +39,8 @@ fi
 
 tar -cjf /tmp/${TAR_FILE} -C ${BACKUP_PATH} ${BACKUP_PATH}/backup.sql
 
+readonly TAR_SIZE=$(du -hs /tmp/$TAR_FILE | awk '{print $1}')
+
 du -hs $BACKUP_PATH
 du -hs /tmp/$TAR_FILE
 
@@ -54,12 +56,19 @@ UPLOAD_STATUS=$?
 do_log "Remove tar file"
 rm -f /tmp/$TAR_FILE
 
+readonly FINISH_DATE=$(date +%F-%H%M)
+
 if [[ $UPLOAD_STATUS != 0 ]]; then
     do_log "ERROR Upload tar /tmp/$TAR_FILE on s3 fail"
-    notify_dev "Warning MySQL Backup $TIMESTAMP" "MySQL Backup: ERROR Upload tar /tmp/$TAR_FILE to S3"
-else
-    do_log "Success upload tar /tmp/$TAR_FILE to S3"
-    notify_dev "MySQL Backup $TIMESTAMP" "MySQL Backup finished successfully $TAR_FILE"
+    notify_dev "Warning MySQL Backup $FINISH_DATE" "MySQL Backup: ERROR Upload tar /tmp/$TAR_FILE to S3"
 fi
 
-exit $?
+if [[ $MYSQL_ROTATE_ARGS ]]; then
+    do_log "Rotating backups..."
+    rotate-backups-s3 $MYSQL_ROTATE_ARGS --include="$S3_MYSQL_BUCKET_PATH/*" --verbose $S3_BUCKET_BACKUP
+fi
+
+do_log "MySQL Backup finished successfully with $TAR_SIZE"
+notify_dev "MySQL Backup $FINISH_DATE" "MySQL Backup finished successfully with $TAR_SIZE s3://$S3_BUCKET_BACKUP/$S3_MYSQL_BUCKET_PATH/$TAR_FILE"
+
+exit 0
