@@ -13,7 +13,7 @@ spec:
           restartPolicy: OnFailure
           containers:
             - name: cron-database-backup
-              image: raniellyf/kubernetes-database-backup:latest
+              image: sa-saopaulo-1.ocir.io/grwidfxfmi4f/kubernetes-database-backup:latest
               imagePullPolicy: Always
               resources:
                 limits:
@@ -51,6 +51,7 @@ spec:
                     secretKeyRef:
                       name: 
                       key: 
+                # MongoDB
                 - name: MONGODB_USERNAME
                   valueFrom:
                     secretKeyRef:
@@ -70,6 +71,11 @@ spec:
                   value: "27017"
                 - name: MONGODB_AUTH_DB
                   value: admin
+                  # OR
+                - name: MONGODB_URI
+                  value: "mongodb://$(MONGODB_USERNAME):$(MONGODB_PASSWORD)@$(MONGODB_HOST)"
+
+                # MySQL
                 - name: MYSQL_HOST
                   valueFrom:
                     secretKeyRef:

@@ -3,9 +3,8 @@
 - MongoDB
 - MySQL
 
-https://hub.docker.com/r/raniellyf/kubernetes-database-backup
 ```sh
-$ docker pull raniellyf/kubernetes-database-backup:latest
+$ docker pull sa-saopaulo-1.ocir.io/grwidfxfmi4f/kubernetes-database-backup:latest
 ```
 
 ### Python rotate lib
