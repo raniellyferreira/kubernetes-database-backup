@@ -1,0 +1,34 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_REPOSITORY: sa-saopaulo-1.ocir.io/grwidfxfmi4f/kubernetes-database-backup
+    steps:
+      - name: Get current date
+        id: date
+        run: echo "::set-output name=date::$(date +%Y%m%d%H%M)"
+      - name: Test with environment variables
+        run: echo $IMAGE_REPOSITORY - ${{ steps.date.outputs.date }}
+      - name: Login to registry
+        uses: docker/login-action@v1
+        with:
+          registry: sa-saopaulo-1.ocir.io
+          username: ${{ secrets.OCI_LOGIN }}
+          password: ${{ secrets.OCI_PASS }}
+      - uses: actions/checkout@v2
+      - name: Build the Docker image
+        run: docker build . --file Dockerfile --tag ${IMAGE_REPOSITORY}:latest
+      - name: Tag docker image
+        run: docker tag "${IMAGE_REPOSITORY}:latest" "${IMAGE_REPOSITORY}:${{ steps.date.outputs.date }}"
+      - name: Push docker image to registry
+        run: |
+          docker push ${IMAGE_REPOSITORY}:latest
+          docker push ${IMAGE_REPOSITORY}:${{ steps.date.outputs.date }}
