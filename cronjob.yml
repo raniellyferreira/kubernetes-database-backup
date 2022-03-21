@@ -26,6 +26,8 @@ spec:
               env:
                 - name: TZ
                   value: America/Sao_Paulo
+                - name: FAST_COMPRESSION
+                  value: "1"
                 - name: MONGODB_BACKUP
                   value: "1"
                 - name: MYSQL_BACKUP

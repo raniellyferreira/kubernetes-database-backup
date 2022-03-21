@@ -20,8 +20,6 @@ RUN set -x \
     && pip3 install --upgrade pip \
     && pip3 install awscli rotate-backups-s3
 
-ARG CACHEBUST=1
-
 COPY scripts/start-backups /usr/local/bin/start-backups
 RUN chmod +x /usr/local/bin/start-backups
 
@@ -30,5 +28,7 @@ RUN chmod +x /usr/local/bin/mongodb-backup
 
 COPY scripts/mysql-backup /usr/local/bin/mysql-backup
 RUN chmod +x /usr/local/bin/mysql-backup
+
+WORKDIR /backup
 
 ENTRYPOINT [ "start-backups" ]
