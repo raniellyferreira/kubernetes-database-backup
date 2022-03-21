@@ -28,13 +28,12 @@ mkdir -p $BACKUP_PATH
 cd $BACKUP_PATH
 
 # mysqldump para exportar a database
-mysql --host=$MYSQL_HOST --user=$MYSQL_ROOT_USERNAME --password="${MYSQL_ROOT_PASSWORD}" -N -e 'show databases' | \
+mysql --host=$MYSQL_HOST --user=$MYSQL_ROOT_USERNAME --password="${MYSQL_ROOT_PASSWORD}" -N -e "SHOW databases" | \
     while read dbname; do \
-        if [ $dbname -eq "information_schema" ] || [ $dbname -eq "performance_schema" ] || [ $dbname -eq "mysql" ] || [ $dbname -eq "sys" ]; then \
-            continue; \
+        if [[ ! " ${MYSQL_IGNORE_DATABASES[*]} " =~ " ${dbname} " ]]; then \
+            do_log "Dumping database ${dbname} to ${BACKUP_PATH}/${dbname}.sql..."; \
+            mysqldump --verbose --routines --host=$MYSQL_HOST --user=$MYSQL_ROOT_USERNAME --password="${MYSQL_ROOT_PASSWORD}" $dbname > $BACKUP_PATH/$dbname.sql; \
         fi; \
-        do_log "Dumping database ${dbname} to ${BACKUP_PATH}/${dbname}.sql..."; \
-        mysqldump --verbose --routines --host=$MYSQL_HOST --user=$MYSQL_ROOT_USERNAME --password="${MYSQL_ROOT_PASSWORD}" $dbname > $BACKUP_PATH/$dbname.sql; \
     done
 
 if [[ $? != 0 ]]; then

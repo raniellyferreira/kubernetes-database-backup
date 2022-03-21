@@ -30,6 +30,8 @@ spec:
                   value: "1"
                 - name: MYSQL_BACKUP
                   value: "1"
+                - name: MYSQL_IGNORE_DATABASES
+                  value: "information_schema performance_schema mysql sys"
                 - name: REPORT_SUCCESSFULLY
                   value: "0"
                 - name: S3_BUCKET_BACKUP
