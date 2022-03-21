@@ -1,4 +1,4 @@
-apiVersion: batch/v1beta1
+apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: database-backup
@@ -6,11 +6,15 @@ metadata:
 spec:
   schedule: "1 9,21 * * *"
   concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
   jobTemplate:
     spec:
       template:
         spec:
           restartPolicy: OnFailure
+          nodeSelector:
+            kubernetes.io/arch: amd64
           containers:
             - name: cron-database-backup
               image: sa-saopaulo-1.ocir.io/grwidfxfmi4f/kubernetes-database-backup:latest
