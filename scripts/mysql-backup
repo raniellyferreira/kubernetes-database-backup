@@ -28,7 +28,11 @@ mkdir -p $BACKUP_PATH
 cd $BACKUP_PATH
 
 # mysqldump para exportar a database
-mysqldump --host=$MYSQL_HOST --user=$MYSQL_ROOT_USERNAME --password="${MYSQL_ROOT_PASSWORD}" --all-databases > $BACKUP_PATH/backup.sql
+mysql --host=$MYSQL_HOST --user=$MYSQL_ROOT_USERNAME --password="${MYSQL_ROOT_PASSWORD}" -N -e 'show databases' | \
+    while read dbname; do \
+        do_log "Dumping database ${dbname} to ${BACKUP_PATH}/${dbname}.sql..."; \
+        mysqldump --verbose --routines --host=$MYSQL_HOST --user=$MYSQL_ROOT_USERNAME --password="${MYSQL_ROOT_PASSWORD}" $dbname > $BACKUP_PATH/$dbname.sql; \
+    done
 
 if [[ $? != 0 ]]; then
     do_log "ERROR backup"
@@ -41,7 +45,7 @@ if [[ $? != 0 ]]; then
 fi
 
 do_log "Compressing backup..."
-tar -cjf $TEMP_DIR/${TAR_FILE} -C ${BACKUP_PATH} ${BACKUP_PATH}/backup.sql
+tar -cjf $TEMP_DIR/${TAR_FILE} -C ${BACKUP_PATH} ${BACKUP_PATH}/*.sql
 
 readonly TAR_SIZE=$(du -hs $TEMP_DIR/$TAR_FILE | awk '{print $1}')
 
