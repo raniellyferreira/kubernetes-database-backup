@@ -12,11 +12,12 @@ do_log() {
 
 notify_dev() {
     # Adicione aqui uma forma de notificação quando o backup for concluido ou tiver erro
-    # Ex.:
-    # curl --fail --silent --request POST $NTFY_ENDPOINT \
-    #     --header "x-api-key: ${NTFY_TOKEN}" \
-    #     --header 'Content-Type: application/json' \
-    #     --data-raw "{\"subject\": \"${1}\",\"message\": \"${2}\",\"topic\":\"mail\"}"
+    if [ -n "$NTFY_ENDPOINT" ] && [ -n "$NTFY_TOKEN" ]; then
+        curl --fail --silent --request POST $NTFY_ENDPOINT \
+            --header "x-api-key: ${NTFY_TOKEN}" \
+            --header 'Content-Type: application/json' \
+            --data-raw "{\"subject\": \"${1}\",\"message\": \"${2}\",\"topic\":\"mail\"}"
+    fi
 }
 
 do_log "Starting backup MySQL..."
@@ -72,6 +73,8 @@ if [[ $MYSQL_ROTATE_ARGS ]]; then
 fi
 
 do_log "MySQL Backup finished successfully with $TAR_SIZE"
-notify_dev "MySQL Backup $FINISH_DATE" "MySQL Backup finished successfully with $TAR_SIZE s3://$S3_BUCKET_BACKUP/$S3_MYSQL_BUCKET_PATH/$TAR_FILE"
+if [[ $REPORT_SUCCESSFULLY == 1 ]]; then
+    notify_dev "MySQL Backup $FINISH_DATE" "MySQL Backup finished successfully with $TAR_SIZE s3://$S3_BUCKET_BACKUP/$S3_MYSQL_BUCKET_PATH/$TAR_FILE"
+fi
 
 exit 0

@@ -26,6 +26,8 @@ spec:
                   value: "1"
                 - name: MYSQL_BACKUP
                   value: "1"
+                - name: REPORT_SUCCESSFULLY
+                  value: "0"
                 - name: S3_BUCKET_BACKUP
                   value: 
                 - name: S3_MONGODB_BUCKET_PATH
