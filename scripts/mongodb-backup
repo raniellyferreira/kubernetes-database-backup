@@ -45,7 +45,7 @@ if [[ $? != 0 ]]; then
 fi
 
 do_log "Compressing backup..."
-tar -cjf $TEMP_DIR/${TAR_FILE} -C ${BACKUP_PATH} ${BACKUP_PATH}
+tar -vcjf $TEMP_DIR/${TAR_FILE} -C ${BACKUP_PATH} ${BACKUP_PATH}
 
 readonly TAR_SIZE=$(du -hs $TEMP_DIR/$TAR_FILE | awk '{print $1}')
 
