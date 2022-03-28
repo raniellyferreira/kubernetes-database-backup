@@ -27,6 +27,10 @@ mkdir -p $TEMP_DIR
 mkdir -p $BACKUP_PATH
 cd $BACKUP_PATH
 
+# Erase backup dir before backup start
+do_log "Cleanup old backup $BACKUP_PATH"
+rm -vrf "$BACKUP_PATH/*"
+
 # mysqldump para exportar a database
 mysql --host=$MYSQL_HOST --user=$MYSQL_ROOT_USERNAME --password="${MYSQL_ROOT_PASSWORD}" -N -e "SHOW databases" | \
     while read dbname; do \
@@ -58,8 +62,8 @@ readonly TAR_SIZE=$(du -hs $TEMP_DIR/$TAR_FILE | awk '{print $1}')
 du -hs $BACKUP_PATH
 du -hs $TEMP_DIR/$TAR_FILE
 
-do_log "Cleanup old backup /backup/auto"
-rm -rf "$BACKUP_PATH/*"
+do_log "Cleanup backup path $BACKUP_PATH"
+rm -vrf "$BACKUP_PATH/*"
 
 # Upload to S3
 do_log "Upload file on s3 s3://$S3_BUCKET_BACKUP/$S3_MYSQL_BUCKET_PATH/$TAR_FILE"
