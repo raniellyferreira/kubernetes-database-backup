@@ -1,4 +1,4 @@
-FROM alpine:3
+FROM --platform=amd64 alpine:3
 
 LABEL maintainer="Ranielly Ferreira <eu@raniellyferreira.com.br>"
 
@@ -11,9 +11,9 @@ RUN set -xe; \
     tar \
     mongodb-tools \
     mariadb-client \
+    mariadb-connector-c-dev \
     python3 \
     py3-pip \
-    && pip3 install --upgrade pip \
     && pip3 install awscli rotate-backups-s3
 
 COPY scripts/start-backups /usr/local/bin/start-backups
