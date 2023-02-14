@@ -24,11 +24,12 @@ jobs:
           username: ${{ secrets.OCI_LOGIN }}
           password: ${{ secrets.OCI_PASS }}
       - uses: actions/checkout@v2
-      - name: Build the Docker image
-        run: docker build . --file Dockerfile --tag ${IMAGE_REPOSITORY}:latest
-      - name: Tag docker image
-        run: docker tag "${IMAGE_REPOSITORY}:latest" "${IMAGE_REPOSITORY}:${{ steps.date.outputs.date }}"
-      - name: Push docker image to registry
+
+      - name: Build & Push docker image to registry
         run: |
-          docker push ${IMAGE_REPOSITORY}:latest
-          docker push ${IMAGE_REPOSITORY}:${{ steps.date.outputs.date }}
+          docker buildx ls
+          docker buildx build . \
+            --push \
+            --platform linux/amd64,linux/arm64 \
+            --tag ${IMAGE_REPOSITORY}:latest \
+            --tag ${IMAGE_REPOSITORY}:${{ steps.date.outputs.date }}
