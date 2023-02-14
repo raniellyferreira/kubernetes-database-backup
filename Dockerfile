@@ -1,30 +1,27 @@
-FROM --platform=amd64 alpine:3
+FROM alpine:3
 
 LABEL maintainer="Ranielly Ferreira <eu@raniellyferreira.com.br>"
 
-RUN set -xe; \
+RUN set -ex; \
     apk add --no-cache --update \
-    bash \
-    tzdata \
-    curl \
-    zip \
-    tar \
-    mongodb-tools \
-    mariadb-client \
-    mariadb-connector-c-dev \
-    python3 \
-    py3-pip \
-    && pip3 install awscli rotate-backups-s3
+        bash \
+        tzdata \
+        curl \
+        zip \
+        tar \
+        mongodb-tools \
+        mariadb-client \
+        mariadb-connector-c-dev \
+        aws-cli \
+        openssl
 
-COPY scripts/start-backups /usr/local/bin/start-backups
-RUN chmod +x /usr/local/bin/start-backups
-
-COPY scripts/mongodb-backup /usr/local/bin/mongodb-backup
-RUN chmod +x /usr/local/bin/mongodb-backup
-
-COPY scripts/mysql-backup /usr/local/bin/mysql-backup
-RUN chmod +x /usr/local/bin/mysql-backup
+RUN set -ex; \
+    curl -SsL https://raw.githubusercontent.com/raniellyferreira/rotate-files/master/environment/scripts/get | sh
 
 WORKDIR /backup
+
+ENV PATH "$PATH:/opt/scripts/bin"
+
+COPY scripts/ /opt/scripts/bin/
 
 ENTRYPOINT [ "start-backups" ]

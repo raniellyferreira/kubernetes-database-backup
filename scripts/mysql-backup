@@ -83,7 +83,7 @@ fi
 
 if [[ $MYSQL_ROTATE_ARGS ]]; then
     do_log "Rotating backups..."
-    rotate-backups-s3 $MYSQL_ROTATE_ARGS --include="$S3_MYSQL_BUCKET_PATH/*" --verbose $S3_BUCKET_BACKUP
+    rotate s3://$S3_BUCKET_BACKUP/$S3_MYSQL_BUCKET_PATH $MYSQL_ROTATE_ARGS
 fi
 
 do_log "MySQL Backup finished successfully with $TAR_SIZE"

@@ -3,10 +3,10 @@
 - MongoDB
 - MySQL
 
-```sh
-$ docker pull sa-saopaulo-1.ocir.io/grwidfxfmi4f/kubernetes-database-backup:latest
+```bash
+docker pull gru.ocir.io/grwidfxfmi4f/kubernetes-database-backup:latest
 ```
 
-### Python rotate lib
+## Backup rotatation with
 
-https://github.com/saltonmassally/python-rotate-backups-s3
+https://github.com/raniellyferreira/rotate-files

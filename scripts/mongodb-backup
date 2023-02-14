@@ -82,7 +82,7 @@ fi
 
 if [[ $MONGODB_ROTATE_ARGS ]]; then
     do_log "Rotating backups..."
-    rotate-backups-s3 $MONGODB_ROTATE_ARGS --include="$S3_MONGODB_BUCKET_PATH/*" --verbose $S3_BUCKET_BACKUP
+    rotate s3://$S3_BUCKET_BACKUP/$S3_MONGODB_BUCKET_PATH $MONGODB_ROTATE_ARGS
 fi
 
 do_log "MongoDB Backup finished successfully with $TAR_SIZE"
