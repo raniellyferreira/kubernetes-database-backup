@@ -24,4 +24,6 @@ ENV PATH "$PATH:/opt/scripts/bin"
 
 COPY scripts/ /opt/scripts/bin/
 
+RUN chmod +x /opt/scripts/bin/*
+
 ENTRYPOINT [ "start-backups" ]
