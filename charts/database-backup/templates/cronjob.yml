@@ -1,0 +1,70 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Release.Name }}-backup-cronjob
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Release.Name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  schedule: {{ .Values.schedule | default "1 6 * * *" | quote }}
+  concurrencyPolicy: {{ .Values.concurrencyPolicy | default "Forbid" }}
+  successfulJobsHistoryLimit: {{ .Values.successfulJobsHistoryLimit | default 1 }}
+  failedJobsHistoryLimit: {{ .Values.failedJobsHistoryLimit | default 3 }}
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+{{- if .Values.nodeSelector }}
+          nodeSelector:
+{{ toYaml .Values.nodeSelector | indent 12 }}
+{{- end }}
+          containers:
+            - name: {{ .Release.Name }}-job
+              image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+              imagePullPolicy: {{ .Values.image.pullPolicy | default "IfNotPresent" }}
+              command:
+{{- if .Values.customCommand }}
+{{- range splitList " " .Values.customCommand }}
+                - {{ . | quote }}
+{{- end }}
+{{- end }}
+              args: []
+{{- if .Values.resources }}
+              resources:
+{{ toYaml .Values.resources | indent 16 }}
+{{- end }}
+              env:
+{{- if .Values.extraEnv }}
+{{ toYaml .Values.extraEnv | indent 16 }}
+{{- end }}
+
+{{- if .Values.envFrom }}
+              envFrom:
+{{ toYaml .Values.envFrom | indent 16 }}
+{{- end }}
+              volumeMounts:
+                - name: backups-scripts
+                  mountPath: /opt/scripts/bin
+                  readOnly: true
+{{- if .Values.volumeMounts }}
+{{ toYaml .Values.volumeMounts | indent 16 }}
+{{- end }}
+
+{{- if .Values.image.pullSecret }}
+          imagePullSecrets: 
+            - name: {{ .Values.image.pullSecret }}
+{{- end }}
+
+          volumes:
+            - name: backups-scripts
+              configMap:
+                name: {{ .Release.Name }}-backup-scripts
+                defaultMode: 0777
+{{- if .Values.volumes }}
+{{ toYaml .Values.volumes | indent 8 }}
+{{- end }}

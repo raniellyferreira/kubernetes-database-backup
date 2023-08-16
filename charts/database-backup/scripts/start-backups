@@ -1,0 +1,17 @@
+#!/bin/bash -e
+
+PGSQL_BACKUP=${PGSQL_BACKUP:-"0"}
+MYSQL_BACKUP=${MYSQL_BACKUP:-"0"}
+MONGODB_BACKUP=${MONGODB_BACKUP:-"0"}
+
+if [[ $PGSQL_BACKUP == "1" ]]; then
+    postgresql-backup
+fi
+
+if [[ $MYSQL_BACKUP == "1" ]]; then
+    mysql-backup
+fi
+
+if [[ $MONGODB_BACKUP == "1" ]]; then
+    mongodb-backup
+fi

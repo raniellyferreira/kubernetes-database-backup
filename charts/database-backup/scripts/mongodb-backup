@@ -1,10 +1,27 @@
-#!/bin/bash
-set -e
+#!/bin/bash -e
 
-readonly BACKUP_PATH="/backup/auto"
-readonly TEMP_DIR="/backup/tmp"
-readonly TIMESTAMP=$(date +%F-%H%M)
-readonly TAR_FILE="mongodb-${TIMESTAMP}.tar.gz"
+BACKUP_PATH="/backup/auto"
+TEMP_DIR="/backup/tmp"
+TIMESTAMP=$(date +%F-%H%M)
+TAR_FILE="mongodb-${TIMESTAMP}.tar.gz"
+REPORT_SUCCESSFULLY=${REPORT_SUCCESSFULLY:-"0"}
+FAST_COMPRESSION=${FAST_COMPRESSION:-"1"}
+S3_BUCKET_BACKUP=${S3_BUCKET_BACKUP:-"backups"}
+
+AWS_S3_ADDON_PARAMS=()
+if [ -n "$AWS_ENDPOINT_OVERRIDE" ]; then
+    AWS_S3_ADDON_PARAMS+=(--endpoint-url="$AWS_ENDPOINT_OVERRIDE")
+fi
+
+ROTATE_ARGS=${MONGODB_ROTATE_ARGS:-$ROTATE_ARGS}
+MONGODB_S3_BUCKET_PATH=${MONGODB_S3_BUCKET_PATH:-${S3_MONGODB_BUCKET_PATH:-"mongodb"}}
+
+MONGODB_URI=${MONGODB_URI:-}
+MONGODB_AUTH_DB=${MONGODB_AUTH_DB:-"admin"}
+MONGODB_USERNAME=${MONGODB_USERNAME:-"root"}
+MONGODB_PASSWORD=${MONGODB_PASSWORD:-}
+MONGODB_HOST=${MONGODB_HOST:-"localhost"}
+MONGODB_PORT=${MONGODB_PORT:-"27017"}
 
 do_log() {
     echo $(date +"[ %d/%m/%Y - %H:%M:%S ] #")" $@"
@@ -29,7 +46,7 @@ cd $BACKUP_PATH
 
 # Erase backup dir before backup start
 do_log "Cleanup old backup $BACKUP_PATH"
-rm -vrf "$BACKUP_PATH/*"
+rm -vrf $BACKUP_PATH/*
 
 # Mongodump para exportar a database
 if [[ $MONGODB_URI ]]; then
@@ -55,24 +72,24 @@ else
     tar -vcjf $TEMP_DIR/${TAR_FILE} -C ${BACKUP_PATH} ${BACKUP_PATH}
 fi
 
-readonly TAR_SIZE=$(du -hs $TEMP_DIR/$TAR_FILE | awk '{print $1}')
+TAR_SIZE=$(du -hs $TEMP_DIR/$TAR_FILE | awk '{print $1}')
 
 du -hs $BACKUP_PATH
 du -hs $TEMP_DIR/$TAR_FILE
 
 do_log "Cleanup backup path $BACKUP_PATH"
-rm -vrf "$BACKUP_PATH/*"
+rm -vrf $BACKUP_PATH/*
 
 # Upload to S3
-do_log "Upload file on s3 s3://$S3_BUCKET_BACKUP/$S3_MONGODB_BUCKET_PATH/$TAR_FILE"
-aws s3 cp $TEMP_DIR/$TAR_FILE  s3://$S3_BUCKET_BACKUP/$S3_MONGODB_BUCKET_PATH/$TAR_FILE
+do_log "Upload file on s3 s3://$S3_BUCKET_BACKUP/$MONGODB_S3_BUCKET_PATH/$TAR_FILE"
+aws s3 "${AWS_S3_ADDON_PARAMS[@]}" cp $TEMP_DIR/$TAR_FILE  s3://$S3_BUCKET_BACKUP/$MONGODB_S3_BUCKET_PATH/$TAR_FILE
 
 UPLOAD_STATUS=$?
 
 do_log "Remove tar file"
 rm -f $TEMP_DIR/$TAR_FILE
 
-readonly FINISH_DATE=$(date +%F-%H%M)
+FINISH_DATE=$(date +%F-%H%M)
 
 if [[ $UPLOAD_STATUS != 0 ]]; then
     do_log "ERROR Upload tar $TEMP_DIR/$TAR_FILE on s3 fail"
@@ -80,15 +97,15 @@ if [[ $UPLOAD_STATUS != 0 ]]; then
     exit 1  
 fi
 
-if [[ $MONGODB_ROTATE_ARGS ]]; then
+if [[ $ROTATE_ARGS ]]; then
     do_log "Rotating backups..."
-    rotate s3://$S3_BUCKET_BACKUP/$S3_MONGODB_BUCKET_PATH $MONGODB_ROTATE_ARGS
+    rotate s3://$S3_BUCKET_BACKUP/$MONGODB_S3_BUCKET_PATH $ROTATE_ARGS
 fi
 
 do_log "MongoDB Backup finished successfully with $TAR_SIZE"
 
 if [[ $REPORT_SUCCESSFULLY == 1 ]]; then
-    notify_dev "MongoDB Backup $FINISH_DATE" "MongoDB Backup finished successfully with $TAR_SIZE s3://$S3_BUCKET_BACKUP/$S3_MONGODB_BUCKET_PATH/$TAR_FILE"
+    notify_dev "MongoDB Backup $FINISH_DATE" "MongoDB Backup finished successfully with $TAR_SIZE s3://$S3_BUCKET_BACKUP/$MONGODB_S3_BUCKET_PATH/$TAR_FILE"
 fi
 
 exit 0

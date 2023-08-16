@@ -1,0 +1,115 @@
+#!/bin/bash -e
+
+BACKUP_PATH="/backup/auto"
+TEMP_DIR="/backup/tmp"
+TIMESTAMP=$(date +%F-%H%M)
+TAR_FILE="postgresql-${TIMESTAMP}.tar.gz"
+REPORT_SUCCESSFULLY=${REPORT_SUCCESSFULLY:-"0"}
+FAST_COMPRESSION=${FAST_COMPRESSION:-"1"}
+ROTATE_ARGS=${PGSQL_ROTATE_ARGS:-$ROTATE_ARGS}
+
+AWS_S3_ADDON_PARAMS=()
+if [ -n "$AWS_ENDPOINT_OVERRIDE" ]; then
+    AWS_S3_ADDON_PARAMS+=(--endpoint-url="$AWS_ENDPOINT_OVERRIDE")
+fi
+
+S3_BUCKET_BACKUP=${S3_BUCKET_BACKUP:-"backups"}
+PGSQL_S3_BUCKET_PATH=${PGSQL_S3_BUCKET_PATH:-"postgresql"}
+
+PGSQL_HOST=${PGSQL_HOST:-"localhost"}
+PGSQL_USERNAME=${PGSQL_USERNAME:-"root"}
+PGSQL_PASSWORD=${PGSQL_PASSWORD:-}
+PGSQL_DATABASE=${PGSQL_DATABASE:-${PGSQL_AUTH_DATABASE:-"postgres"}}
+PGSQL_IGNORE_DATABASES=${PGSQL_IGNORE_DATABASES:-""}
+
+export PGPASSWORD=$PGSQL_PASSWORD
+
+do_log() {
+    echo $(date +"[ %d/%m/%Y - %H:%M:%S ] #")" $@"
+}
+
+notify_dev() {
+    # Adicione aqui uma forma de notificação quando o backup for concluído ou tiver erro
+    if [ -n "$NTFY_ENDPOINT" ] && [ -n "$NTFY_TOKEN" ]; then
+        curl --fail --silent --request POST $NTFY_ENDPOINT \
+            --header "x-api-key: ${NTFY_TOKEN}" \
+            --header 'Content-Type: application/json' \
+            --data-raw "{\"subject\": \"${1}\",\"message\": \"${2}\",\"topic\":\"mail\"}"
+    fi
+}
+
+do_log "Starting backup PostgreSQL..."
+
+# Create a backup dir
+mkdir -p $TEMP_DIR
+mkdir -p $BACKUP_PATH
+cd $BACKUP_PATH
+
+# Erase backup dir before backup start
+do_log "Cleanup old backup $BACKUP_PATH"
+rm -vrf $BACKUP_PATH/*
+
+# TODO incluir databases PGSQL_INCLUDE_DATABASES is array
+# pg_dump para exportar o banco de dados
+psql -h $PGSQL_HOST -U $PGSQL_USERNAME -l -t | \
+    awk '{if ($1) print $1}' | \
+    grep -vE '^-|^List|^Name|template[01]|^\|$' | \
+    while read -r dbname; do \
+        if [[ ! " ${PGSQL_IGNORE_DATABASES[*]} " =~ " ${dbname} " ]]; then \
+            do_log "Dumping database ${dbname} to ${BACKUP_PATH}/${dbname}.sql..."; \
+            pg_dump -h $PGSQL_HOST -U $PGSQL_USERNAME -d $dbname > $BACKUP_PATH/$dbname.sql; \
+        fi; \
+    done
+
+if [[ $? != 0 ]]; then
+    do_log "ERROR backup"
+    do_log "Dumping of PostgreSQL database failed"
+    do_log "Cleanup old backup $BACKUP_PATH"
+
+    notify_dev "Warning PostgreSQL Backup $TIMESTAMP" "PostgreSQL Backup: ERROR on export data"
+    rm -rf "$BACKUP_PATH/*"
+    exit 1
+fi
+
+do_log "Compressing backup..."
+if [[ $FAST_COMPRESSION == 1 ]]; then 
+    tar -vczf $TEMP_DIR/${TAR_FILE} -C ${BACKUP_PATH} ${BACKUP_PATH}/*.sql
+else
+    tar -vcjf $TEMP_DIR/${TAR_FILE} -C ${BACKUP_PATH} ${BACKUP_PATH}/*.sql
+fi
+
+TAR_SIZE=$(du -hs $TEMP_DIR/$TAR_FILE | awk '{print $1}')
+
+du -hs $BACKUP_PATH
+du -hs $TEMP_DIR/$TAR_FILE
+
+do_log "Cleanup backup path $BACKUP_PATH"
+rm -vrf $BACKUP_PATH/*
+
+# Upload to S3
+do_log "Upload file on s3 s3://$S3_BUCKET_BACKUP/$PGSQL_S3_BUCKET_PATH/$TAR_FILE"
+aws s3 "${AWS_S3_ADDON_PARAMS[@]}" cp $TEMP_DIR/$TAR_FILE  s3://$S3_BUCKET_BACKUP/$PGSQL_S3_BUCKET_PATH/$TAR_FILE
+
+UPLOAD_STATUS=$?
+
+do_log "Remove tar file"
+rm -f $TEMP_DIR/$TAR_FILE
+
+FINISH_DATE=$(date +%F-%H%M)
+
+if [[ $UPLOAD_STATUS != 0 ]]; then
+    do_log "ERROR Upload tar $TEMP_DIR/$TAR_FILE on s3 fail"
+    notify_dev "Warning PostgreSQL Backup $FINISH_DATE" "PostgreSQL Backup: ERROR Upload tar $TEMP_DIR/$TAR_FILE to S3"
+fi
+
+if [[ $ROTATE_ARGS ]]; then
+    do_log "Rotating backups..."
+    rotate s3://$S3_BUCKET_BACKUP/$PGSQL_S3_BUCKET_PATH $ROTATE_ARGS
+fi
+
+do_log "PostgreSQL Backup finished successfully with $TAR_SIZE"
+if [[ $REPORT_SUCCESSFULLY == 1 ]]; then
+    notify_dev "PostgreSQL Backup $FINISH_DATE" "PostgreSQL Backup finished successfully with $TAR_SIZE s3://$S3_BUCKET_BACKUP/$PGSQL_S3_BUCKET_PATH/$TAR_FILE"
+fi
+
+exit 0
