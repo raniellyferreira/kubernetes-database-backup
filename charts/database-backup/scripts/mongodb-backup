@@ -61,7 +61,7 @@ if [[ $? != 0 ]]; then
     do_log "Cleanup old backup $BACKUP_PATH"
 
     notify_dev "Warning MongoDB Backup $TIMESTAMP" "MongoDB Backup: ERROR on export data"
-    rm -rf "$BACKUP_PATH/*"
+    rm -rf $BACKUP_PATH/*
     exit 1
 fi
 
