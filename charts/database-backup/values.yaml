@@ -36,7 +36,7 @@ extraEnv:
     value: "0"
 
   - name: ROTATE_ARGS
-    value: "--hourly 24 --daily 7 --weekly 10 --monthly 12 --yearly -1 -D"
+    value: "--hourly 24 --daily 7 --weekly 10 --monthly 12 --yearly 10 -D"
 
   # - name: S3_BUCKET_BACKUP
   #   value: 
@@ -91,7 +91,7 @@ extraEnv:
   # - name: MYSQL_S3_BUCKET_PATH
   #   value: database/mysql
   # - name: MYSQL_IGNORE_DATABASES
-  #   value: "information_schema performance_schema mysql sys"
+  #   value: "information_schema performance_schema mysql sys mysql_audit"
   # - name: MYSQL_HOST
   #   valueFrom:
   #     secretKeyRef:
@@ -120,4 +120,4 @@ extraEnv:
   #       name: 
   #       key: 
   # - name: PGSQL_IGNORE_DATABASES
-  #   value: postgresql postgres rdsadmin
+  #   value: postgres rdsadmin

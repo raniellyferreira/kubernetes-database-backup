@@ -66,7 +66,7 @@ if [[ $? != 0 ]]; then
 fi
 
 do_log "Compressing backup..."
-if [[ $FAST_COMPRESSION == 1 ]]; then 
+if [[ $FAST_COMPRESSION == "1" ]]; then
     tar -vczf $TEMP_DIR/${TAR_FILE} -C ${BACKUP_PATH} ${BACKUP_PATH}
 else
     tar -vcjf $TEMP_DIR/${TAR_FILE} -C ${BACKUP_PATH} ${BACKUP_PATH}
@@ -104,7 +104,7 @@ fi
 
 do_log "MongoDB Backup finished successfully with $TAR_SIZE"
 
-if [[ $REPORT_SUCCESSFULLY == 1 ]]; then
+if [[ $REPORT_SUCCESSFULLY == "1" ]]; then
     notify_dev "MongoDB Backup $FINISH_DATE" "MongoDB Backup finished successfully with $TAR_SIZE s3://$S3_BUCKET_BACKUP/$MONGODB_S3_BUCKET_PATH/$TAR_FILE"
 fi
 
