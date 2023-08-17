@@ -27,6 +27,8 @@ extraEnv:
   value: "1"
 - name: PGSQL_S3_BUCKET_PATH
   value: database/postgresql
+- name: PGSQL_IGNORE_DATABASES
+  value: postgres rdsadmin
 - name: PGSQL_HOST
   value: 
 - name: PGSQL_USERNAME
@@ -36,8 +38,6 @@ extraEnv:
     secretKeyRef:
       name: 
       key: 
-- name: PGSQL_IGNORE_DATABASES
-  value: postgresql postgres rdsadmin
 
 # MySQL
 extraEnv:
@@ -46,7 +46,7 @@ extraEnv:
 - name: MYSQL_S3_BUCKET_PATH
   value: database/mysql
 - name: MYSQL_IGNORE_DATABASES
-  value: "information_schema performance_schema mysql sys"
+  value: "information_schema performance_schema mysql sys mysql_audit"
 - name: MYSQL_HOST
   valueFrom:
     secretKeyRef:
