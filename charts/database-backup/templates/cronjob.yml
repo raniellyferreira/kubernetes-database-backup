@@ -66,5 +66,5 @@ spec:
                 name: {{ .Release.Name }}-backup-scripts
                 defaultMode: 0777
 {{- if .Values.volumes }}
-{{ toYaml .Values.volumes | indent 8 }}
+{{ toYaml .Values.volumes | indent 12 }}
 {{- end }}
