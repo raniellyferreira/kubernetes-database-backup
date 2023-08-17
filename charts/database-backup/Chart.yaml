@@ -2,4 +2,4 @@ apiVersion: v1
 appVersion: "1.0"
 description: A Helm chart for database backup cronjob
 name: database-backup
-version: 1.0.0
+version: 1.0.1
